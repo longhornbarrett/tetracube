@@ -11,7 +11,6 @@ public class TetracubeNaive {
     static String split = "" + (char) 0x01;
     static NumberFormat numberFormat;
     static DecimalFormat decimal8Digit, decimal6Digit;
-    private long totalParse, totalCompute, totalDate;
 
     TetracubeNaive() {
           numberFormat = NumberFormat.getInstance();
@@ -38,7 +37,6 @@ public class TetracubeNaive {
             }
             reader.close();
             writer.close();
-            System.out.println("Total Date :"+this.totalDate + " Total Compute :"+this.totalCompute + " Total Parse :"+this.totalParse);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -46,7 +44,6 @@ public class TetracubeNaive {
     }
 
     private String ToDateEpochString(String dateString) {
-        long start = System.currentTimeMillis();
         Integer year = Integer.parseInt(dateString.substring(0, 4));
         Integer month = Integer.parseInt(dateString.substring(4, 6));
         Integer date = Integer.parseInt(dateString.substring(6, 8));
@@ -56,12 +53,10 @@ public class TetracubeNaive {
         Integer us = Integer.parseInt(dateString.substring(14, 20));
         Calendar cal = new GregorianCalendar(year, month, date, hour, minute, second);
         String result = (cal.getTimeInMillis() / 1000) + decimal6Digit.format(us);
-        this.totalDate += (System.currentTimeMillis() - start);
         return result;
     }
 
     private String ComputeLimitRangeString(String lowPrice, String highPrice) throws Exception {
-        long start = System.currentTimeMillis();
         if (lowPrice == null || highPrice == null) return "NULL";
         if (lowPrice.charAt(lowPrice.length() - 8) != '.') throw new Exception("Bug");
         if (highPrice.charAt(highPrice.length() - 8) != '.') throw new Exception("Bug");
@@ -78,12 +73,10 @@ public class TetracubeNaive {
         {
             ex.printStackTrace();
         }
-        this.totalCompute += (System.currentTimeMillis() - start);
         return result;
     }
 
     public void ParseLine(String line, StringBuilder sb) throws Exception {
-        long start = System.currentTimeMillis();
         if (IsNullOrWhiteSpace(line)) return;
         String tag48 = null;
         String tag55 = null;
@@ -117,7 +110,6 @@ public class TetracubeNaive {
         sb.append("\tHighLimitPrice=" + tag1149 + "\n");
         sb.append("\tLimitPriceRange=" + ComputeLimitRangeString(tag1148, tag1149) + "\n");
         sb.append("\tTradingReferencePrice=" + tag1150 + "\n");
-        this.totalParse += (System.currentTimeMillis() - start);
     }
 
     public static boolean IsNullOrWhiteSpace(String field) {

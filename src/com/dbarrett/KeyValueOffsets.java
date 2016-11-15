@@ -4,7 +4,7 @@ package com.dbarrett;
  * Created by dbarrett on 11/13/16.
  */
 public class KeyValueOffsets {
-    public int keyStart, keyEnd, valueEnd;
+    public int keyStart, keyEnd, valueStart, valueEnd;
 
     public boolean isNullOrWhiteSpace()
     {
@@ -19,5 +19,6 @@ public class KeyValueOffsets {
     {
         return keyEnd - keyStart;
     }
+    public int getValueLength(){ return valueEnd - valueStart; }
 
 }

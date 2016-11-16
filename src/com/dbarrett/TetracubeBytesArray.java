@@ -1,41 +1,15 @@
 package com.dbarrett;
 
 import java.io.*;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
  * Created by dbarrett on 11/14/16.
  */
 public class TetracubeBytesArray {
-
-    byte delim = 0x01;
-    byte equals = 0x3D;
     byte newLine = 0x0A;
-    byte period = 0x2E;
-    byte zero = 0x30;
-    byte one = 0x31;
-    byte four = 0x34;
-    byte five = 0x35;
-    byte seven = 0x37;
-    byte eight = 0x38;
-    byte nine = 0x39;
-    char semi = ':';
-    char newLineC = '\n';
-    String lastUpdate = "\tLastUpdateTime=";
-    String lowLimit = "\tLowLimitPrice=";
-    String highLimit = "\tHighLimitPrice=";
-    String limitPrice = "\tLimitPriceRange=";
-    String trading = "\tTradingReferencePrice=";
-    Calendar cal = new GregorianCalendar();
-    static NumberFormat numberFormat;
-    static DecimalFormat decimal8Digit, decimal6Digit;
-    int bufferSize = 81920;
+    public static int bufferSize = 81920;
 
     public TetracubeBytesArray()
     {
@@ -43,11 +17,8 @@ public class TetracubeBytesArray {
     public void run() {
         try {
             final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()-1);
-            //final ExecutorService executor = Executors.newFixedThreadPool(1);
             BufferedInputStream in = new BufferedInputStream(new FileInputStream("/Users/dbarrett/dev/tetracube/input/secdef.dat"));
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/Users/dbarrett/dev/tetracube/output/secdef_parsed.txt")));
-            StringBuilder sb = new StringBuilder();
-            int cnt = 0;
             byte[] buffer = new byte[bufferSize];
             byte[] tempBuffer;
             int nRead;

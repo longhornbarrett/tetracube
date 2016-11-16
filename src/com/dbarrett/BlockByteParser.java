@@ -1,7 +1,5 @@
 package com.dbarrett;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -31,19 +29,12 @@ public class BlockByteParser implements Callable<String> {
     String limitPrice = "\tLimitPriceRange=";
     String trading = "\tTradingReferencePrice=";
     Calendar cal = new GregorianCalendar();
-    static NumberFormat numberFormat;
-    static DecimalFormat decimal8Digit, decimal6Digit;
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder(TetracubeBytesArray.bufferSize);
     byte[] bytes;
     int nRead;
+
     public BlockByteParser(byte[] buffer, int nRead)
     {
-        numberFormat = NumberFormat.getInstance();
-        numberFormat.setMinimumIntegerDigits(8);
-        decimal8Digit = (DecimalFormat) NumberFormat.getNumberInstance();
-        decimal8Digit.applyPattern("00000000");
-        decimal6Digit = (DecimalFormat) NumberFormat.getNumberInstance();
-        decimal6Digit.applyPattern("000000");
         this.bytes = buffer;
         this.nRead = nRead;
     }
@@ -123,7 +114,7 @@ public class BlockByteParser implements Callable<String> {
         {
             e.printStackTrace();
         }
-        String result = (cal.getTimeInMillis() / 1000) + new String(dateB, dateO.valueStart +14, 6);
+        String result = String.valueOf(cal.getTimeInMillis() * 1000);
         return result;
     }
 
@@ -132,19 +123,28 @@ public class BlockByteParser implements Callable<String> {
         long lLowPrice = parseLong(bytes, lowPrice.valueStart, lowPrice.valueEnd, true);
         long lHighPrice = parseLong(bytes, highPrice.valueStart, highPrice.valueEnd, true);
         long lRange = lHighPrice - lLowPrice;
-        String sRange = decimal8Digit.format(lRange);
+        String sRange = String.valueOf(lRange);
         String result = "";
         try {
-            result = sRange.substring(0, sRange.length() - 7) + "." + sRange.substring(sRange.length() - 7);
+            int slength = sRange.length();
+            int dec = slength-7;
+            char[] cResult = new char[slength+1];
+            int targetIdx = 0;
+            if(dec <= 0)
+                result = "0."+sRange;
+            else {
+                for (int i = 0; i < slength; i++) {
+                    if (i == dec)
+                        cResult[targetIdx++] = '.';
+                    cResult[targetIdx++] = sRange.charAt(i);
+                }
+                result = new String(cResult);
+            }
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
         return result;
-    }
-
-    public static boolean IsNullOrWhiteSpace(String field) {
-        if (field != null && field.length() > 0) return false;
-        return true;
     }
 
     private int getFields(byte[] bytes, int byteOffset, int byteMax, ArrayList<KeyValueOffsets> fields)

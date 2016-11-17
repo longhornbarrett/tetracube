@@ -14,11 +14,11 @@ public class TetracubeBytesArray {
     public TetracubeBytesArray()
     {
     }
-    public void run() {
+    public void run(String input, String output) {
         try {
             final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()-1);
-            BufferedInputStream in = new BufferedInputStream(new FileInputStream("/Users/dbarrett/dev/tetracube/input/secdef.dat"));
-            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/Users/dbarrett/dev/tetracube/output/secdef_parsed.txt")));
+            BufferedInputStream in = new BufferedInputStream(new FileInputStream(input));
+            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output)));
             byte[] buffer = new byte[bufferSize];
             byte[] tempBuffer;
             int nRead;
@@ -70,9 +70,16 @@ public class TetracubeBytesArray {
 
 
     public static void main(String[] args) {
+        String input = "./secdef.dat";
+        String output = "./secdef_parsed.txt";
+        if(args.length < 1)
+        {
+            input = args[0];
+            output = args[1];
+        }
         Long start = System.currentTimeMillis();
         TetracubeBytesArray cube = new TetracubeBytesArray();
-        cube.run();
+        cube.run(input, output);
         Long end = System.currentTimeMillis();
         System.out.println("Total Time " + (end - start) / 1000 + " milli " + (end - start));
     }

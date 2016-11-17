@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 /**
  * Created by dbarrett on 11/14/16.
  */
-public class BlockByteParser implements Callable<String> {
+public class BlockByteParser implements Callable<ByteOutput> {
     byte delim = 0x01;
     byte equals = 0x3D;
     byte newLine = 0x0A;
@@ -21,26 +21,29 @@ public class BlockByteParser implements Callable<String> {
     byte seven = 0x37;
     byte eight = 0x38;
     byte nine = 0x39;
-    char semi = ':';
+    byte semi = 0x3A;
     char newLineC = '\n';
-    String lastUpdate = "\tLastUpdateTime=";
-    String lowLimit = "\tLowLimitPrice=";
-    String highLimit = "\tHighLimitPrice=";
-    String limitPrice = "\tLimitPriceRange=";
-    String trading = "\tTradingReferencePrice=";
+    byte[] lastUpdateB = {0x09, 0x4C, 0x61, 0x73, 0x74, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x69, 0x6D, 0x65, 0x3D,};
+    byte[] lowLimitB = { 0x09, 0x4C, 0x6F, 0x77, 0x4C, 0x69, 0x6D, 0x69, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x3D};
+    byte[] highLimitB = { 0x09, 0x48, 0x69, 0x67, 0x68, 0x4C, 0x69, 0x6D, 0x69, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x3D};
+    byte[] limitPriceB = {0x09, 0x4C, 0x69, 0x6D, 0x69, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x52, 0x61, 0x6E, 0x67, 0x65, 0x3D};
+    byte[] tradingB = {0x09, 0x54,  0x72, 0x61, 0x64, 0x69, 0x6E, 0x67, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6E, 0x63, 0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x3D};
+    byte[] nullB = {0x4E,0x55,0x4C,0x4C};
     Calendar cal = new GregorianCalendar();
-    StringBuilder sb = new StringBuilder(TetracubeBytesArray.bufferSize);
     byte[] bytes;
+    byte[] outputBytes;
+    int outputIdx = 0;
     int nRead;
 
     public BlockByteParser(byte[] buffer, int nRead)
     {
         this.bytes = buffer;
         this.nRead = nRead;
+        this.outputBytes = new byte[buffer.length];
     }
 
     @Override
-    public String call() throws Exception {
+    public ByteOutput call() throws Exception {
         int j = 0;
         ArrayList<KeyValueOffsets> fields = new ArrayList<KeyValueOffsets>();
         for(int i = 0; j < nRead; i = j) {
@@ -50,11 +53,11 @@ public class BlockByteParser implements Callable<String> {
             {
                 break;
             }
-            parseLineNoCopy(bytes, fields, sb);
+            parseLineNoCopy(bytes, fields);
         }
-         return sb.toString();
+         return new ByteOutput(this.outputBytes, this.outputIdx);
     }
-    public void parseLineNoCopy(byte[] bytes, List<KeyValueOffsets> keys, StringBuilder sb) throws Exception
+    public void parseLineNoCopy(byte[] bytes, List<KeyValueOffsets> keys) throws Exception
     {
         KeyValueOffsets tag48 = null;
         KeyValueOffsets tag55 = null;
@@ -86,22 +89,53 @@ public class BlockByteParser implements Callable<String> {
                 }
             }
         }
-        sb.append(getStringValue(bytes, tag48)).append(semi).append(getStringValue(bytes, tag55)).append(newLineC);
-        sb.append(lastUpdate).append(ToDateEpochString(bytes, tag779)).append(newLineC);
-        sb.append(lowLimit).append(getStringValue(bytes, tag1148)).append(newLineC);
-        sb.append(highLimit).append(getStringValue(bytes, tag1149)).append(newLineC);
-        sb.append(limitPrice).append(ComputeLimitRangeString(bytes, tag1148, tag1149)).append(newLineC);
-        sb.append(trading).append(getStringValue(bytes, tag1150)).append(newLineC);
+        //construct the message tag
+        copyToFinal(tag48);
+        this.outputBytes[outputIdx++] = this.semi;
+        copyToFinal(tag55);
+        this.outputBytes[outputIdx++] = this.newLine;
+        //construct the date message
+
+        copyToFinal(lastUpdateB);
+        ToDateEpochString(bytes, tag779);
+        this.outputBytes[outputIdx++] = newLine;
+        //construct low limit message
+        copyToFinal(this.lowLimitB);
+        copyToFinal(tag1148);
+        this.outputBytes[outputIdx++] = newLine;
+        //construct high limit message
+        copyToFinal(highLimitB);
+        copyToFinal(tag1149);
+        this.outputBytes[outputIdx++] = newLine;
+
+        ComputeLimitRangeString(bytes, tag1148, tag1149);
+        copyToFinal(limitPriceB);
+        this.outputBytes[outputIdx++] = newLine;
+
+        copyToFinal(tradingB);
+        copyToFinal(tag1150);
+        this.outputBytes[outputIdx++] = newLine;
+
     }
 
-    private String getStringValue(byte[] bytes, KeyValueOffsets offset)
+    private void copyToFinal(byte[] byteA)
+    {
+        for(int i = 0; i < byteA.length; i++)
+            this.outputBytes[outputIdx++] = byteA[i];
+    }
+    private void copyToFinal(KeyValueOffsets offset)
     {
         if(offset == null)
-            return "";
-        return new String(bytes, offset.valueStart, offset.getValueLength());
+        {
+            for(int i = 0; i < this.nullB.length; i++)
+                this.outputBytes[outputIdx++] = this.nullB[i];
+        }else {
+            for (int i = offset.valueStart; i < offset.valueEnd; i++)
+                this.outputBytes[outputIdx++] = this.bytes[i];
+        }
     }
 
-    private String ToDateEpochString(byte[] dateB, KeyValueOffsets dateO) {
+    private void ToDateEpochString(byte[] dateB, KeyValueOffsets dateO) {
         try {
             int year = parseInt(dateB, dateO.valueStart, dateO.valueStart + 4);
             int month = parseInt(dateB, dateO.valueStart + 4, dateO.valueStart + 6);
@@ -114,8 +148,14 @@ public class BlockByteParser implements Callable<String> {
         {
             e.printStackTrace();
         }
-        String result = String.valueOf(cal.getTimeInMillis() * 1000);
-        return result;
+        long dateFromEpoch = cal.getTimeInMillis()*1000;
+        long power =1000000000000000L;
+        for(int i = 0; i < 16; i++)
+        {
+            this.outputBytes[outputIdx++] = (byte)((dateFromEpoch/power)+48);
+            dateFromEpoch %= power;
+            power /= 10;
+        }
     }
 
     private String ComputeLimitRangeString(byte[] bytes, KeyValueOffsets lowPrice, KeyValueOffsets highPrice) throws Exception {

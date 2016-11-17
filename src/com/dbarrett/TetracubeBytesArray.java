@@ -18,13 +18,13 @@ public class TetracubeBytesArray {
         try {
             final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()-1);
             BufferedInputStream in = new BufferedInputStream(new FileInputStream(input));
-            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output)));
+            BufferedOutputStream  out = new BufferedOutputStream(new FileOutputStream(output));
             byte[] buffer = new byte[bufferSize];
             byte[] tempBuffer;
             int nRead;
 
             int readOffset = 0;
-            final List<Future<String>> futures = new ArrayList<Future<String>>();
+            final List<Future<ByteOutput>> futures = new ArrayList<Future<ByteOutput>>();
             while ((nRead = in.read(buffer, readOffset, buffer.length-readOffset)) != -1) {
                 nRead += readOffset;
                 if(nRead < buffer.length )
@@ -51,9 +51,10 @@ public class TetracubeBytesArray {
                     }
                 }
             }
-            for (Future<String> future : futures) {
+            for (Future<ByteOutput> future : futures) {
                 try {
-                    out.write(future.get());
+                    ByteOutput bytes = future.get();
+                    out.write(bytes.bytes, 0, bytes.length);
                 } catch (final ExecutionException e) {
                     e.printStackTrace();
                     System.out.println("Error during processing");
@@ -72,7 +73,7 @@ public class TetracubeBytesArray {
     public static void main(String[] args) {
         String input = "./secdef.dat";
         String output = "./secdef_parsed.txt";
-        if(args.length < 1)
+        if(args.length > 1)
         {
             input = args[0];
             output = args[1];
@@ -82,6 +83,16 @@ public class TetracubeBytesArray {
         cube.run(input, output);
         Long end = System.currentTimeMillis();
         System.out.println("Total Time " + (end - start) / 1000 + " milli " + (end - start));
+        long test = 1478451616000691L;
+        long power =1000000000000000L;
+        byte[] bytes = new byte[16];
+        for(int i = 0; i < 16; i++)
+        {
+            bytes[i] = (byte)((test/power)+48);
+            test %= power;
+            power /= 10;
+        }
+        System.out.print(new String(bytes));
     }
 }
 

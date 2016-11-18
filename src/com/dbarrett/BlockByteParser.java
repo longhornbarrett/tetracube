@@ -10,30 +10,30 @@ import java.util.concurrent.Callable;
  * Created by dbarrett on 11/14/16.
  */
 public class BlockByteParser implements Callable<ByteOutput> {
-    byte delim = 0x01;
-    byte equals = 0x3D;
-    byte newLine = 0x0A;
-    byte period = 0x2E;
-    byte zero = 0x30;
-    byte one = 0x31;
-    byte four = 0x34;
-    byte five = 0x35;
-    byte seven = 0x37;
-    byte eight = 0x38;
-    byte nine = 0x39;
-    byte semi = 0x3A;
-    char newLineC = '\n';
-    byte[] lastUpdateB = {0x09, 0x4C, 0x61, 0x73, 0x74, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x69, 0x6D, 0x65, 0x3D,};
-    byte[] lowLimitB = { 0x09, 0x4C, 0x6F, 0x77, 0x4C, 0x69, 0x6D, 0x69, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x3D};
-    byte[] highLimitB = { 0x09, 0x48, 0x69, 0x67, 0x68, 0x4C, 0x69, 0x6D, 0x69, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x3D};
-    byte[] limitPriceB = {0x09, 0x4C, 0x69, 0x6D, 0x69, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x52, 0x61, 0x6E, 0x67, 0x65, 0x3D};
-    byte[] tradingB = {0x09, 0x54,  0x72, 0x61, 0x64, 0x69, 0x6E, 0x67, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6E, 0x63, 0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x3D};
-    byte[] nullB = {0x4E,0x55,0x4C,0x4C};
-    Calendar cal = new GregorianCalendar();
-    byte[] bytes;
-    byte[] outputBytes;
-    int outputIdx = 0;
-    int nRead;
+    private static byte delim = 0x01;
+    private static byte equals = 0x3D;
+    private static byte newLine = 0x0A;
+    private static byte period = 0x2E;
+    private static byte zero = 0x30;
+    private static byte one = 0x31;
+    private static byte four = 0x34;
+    private static byte five = 0x35;
+    private static byte seven = 0x37;
+    private static byte eight = 0x38;
+    private static byte nine = 0x39;
+    private static byte semi = 0x3A;
+    private static byte minus = 0x2D;
+    private static byte[] lastUpdateB = {0x09, 0x4C, 0x61, 0x73, 0x74, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x69, 0x6D, 0x65, 0x3D,};
+    private static byte[] lowLimitB = { 0x09, 0x4C, 0x6F, 0x77, 0x4C, 0x69, 0x6D, 0x69, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x3D};
+    private static byte[] highLimitB = { 0x09, 0x48, 0x69, 0x67, 0x68, 0x4C, 0x69, 0x6D, 0x69, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x3D};
+    private static byte[] limitPriceB = {0x09, 0x4C, 0x69, 0x6D, 0x69, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x52, 0x61, 0x6E, 0x67, 0x65, 0x3D};
+    private static byte[] tradingB = {0x09, 0x54,  0x72, 0x61, 0x64, 0x69, 0x6E, 0x67, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6E, 0x63, 0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x3D};
+    private static byte[] nullB = {0x4E,0x55,0x4C,0x4C};
+    private Calendar cal = new GregorianCalendar();
+    private byte[] bytes;
+    private byte[] outputBytes;
+    private int outputIdx = 0;
+    private int nRead;
 
     public BlockByteParser(byte[] buffer, int nRead)
     {
@@ -57,7 +57,7 @@ public class BlockByteParser implements Callable<ByteOutput> {
         }
          return new ByteOutput(this.outputBytes, this.outputIdx);
     }
-    public void parseLineNoCopy(byte[] bytes, List<KeyValueOffsets> keys) throws Exception
+    private void parseLineNoCopy(byte[] bytes, List<KeyValueOffsets> keys) throws Exception
     {
         KeyValueOffsets tag48 = null;
         KeyValueOffsets tag55 = null;
@@ -65,6 +65,7 @@ public class BlockByteParser implements Callable<ByteOutput> {
         KeyValueOffsets tag1148 = null;
         KeyValueOffsets tag1149 = null;
         KeyValueOffsets tag1150 = null;
+        //go through the buffer and find the field's in the line
         for (KeyValueOffsets field : keys) {
             int tagLength = field.getTagLength();
             byte f = bytes[field.keyStart];
@@ -91,30 +92,32 @@ public class BlockByteParser implements Callable<ByteOutput> {
         }
         //construct the message tag
         copyToFinal(tag48);
-        this.outputBytes[outputIdx++] = this.semi;
+        this.outputBytes[outputIdx++] = BlockByteParser.semi;
         copyToFinal(tag55);
-        this.outputBytes[outputIdx++] = this.newLine;
+        this.outputBytes[outputIdx++] = BlockByteParser.newLine;
         //construct the date message
 
-        copyToFinal(lastUpdateB);
+        copyToFinal(BlockByteParser.lastUpdateB);
         ToDateEpochString(bytes, tag779);
-        this.outputBytes[outputIdx++] = newLine;
+        this.outputBytes[outputIdx++] = BlockByteParser.newLine;
+
         //construct low limit message
-        copyToFinal(this.lowLimitB);
+        copyToFinal(BlockByteParser.lowLimitB);
         copyToFinal(tag1148);
-        this.outputBytes[outputIdx++] = newLine;
+        this.outputBytes[outputIdx++] = BlockByteParser.newLine;
+
         //construct high limit message
-        copyToFinal(highLimitB);
+        copyToFinal(BlockByteParser.highLimitB);
         copyToFinal(tag1149);
-        this.outputBytes[outputIdx++] = newLine;
+        this.outputBytes[outputIdx++] = BlockByteParser.newLine;
 
+        copyToFinal(BlockByteParser.limitPriceB);
         ComputeLimitRangeString(bytes, tag1148, tag1149);
-        copyToFinal(limitPriceB);
-        this.outputBytes[outputIdx++] = newLine;
+        this.outputBytes[outputIdx++] = BlockByteParser.newLine;
 
-        copyToFinal(tradingB);
+        copyToFinal(BlockByteParser.tradingB);
         copyToFinal(tag1150);
-        this.outputBytes[outputIdx++] = newLine;
+        this.outputBytes[outputIdx++] = BlockByteParser.newLine;
 
     }
 
@@ -127,8 +130,7 @@ public class BlockByteParser implements Callable<ByteOutput> {
     {
         if(offset == null)
         {
-            for(int i = 0; i < this.nullB.length; i++)
-                this.outputBytes[outputIdx++] = this.nullB[i];
+            outputNull();
         }else {
             for (int i = offset.valueStart; i < offset.valueEnd; i++)
                 this.outputBytes[outputIdx++] = this.bytes[i];
@@ -148,6 +150,8 @@ public class BlockByteParser implements Callable<ByteOutput> {
         {
             e.printStackTrace();
         }
+        //java calender does milliseconds since epoch not microseconds
+        //could pull the microseconds from the field
         long dateFromEpoch = cal.getTimeInMillis()*1000;
         long power =1000000000000000L;
         for(int i = 0; i < 16; i++)
@@ -158,40 +162,111 @@ public class BlockByteParser implements Callable<ByteOutput> {
         }
     }
 
-    private String ComputeLimitRangeString(byte[] bytes, KeyValueOffsets lowPrice, KeyValueOffsets highPrice) throws Exception {
-        if (lowPrice == null || highPrice == null) return "NULL";
-        long lLowPrice = parseLong(bytes, lowPrice.valueStart, lowPrice.valueEnd, true);
-        long lHighPrice = parseLong(bytes, highPrice.valueStart, highPrice.valueEnd, true);
-        long lRange = lHighPrice - lLowPrice;
-        String sRange = String.valueOf(lRange);
-        String result = "";
-        try {
-            int slength = sRange.length();
-            int dec = slength-7;
-            char[] cResult = new char[slength+1];
-            int targetIdx = 0;
-            if(dec <= 0)
-                result = "0."+sRange;
-            else {
-                for (int i = 0; i < slength; i++) {
-                    if (i == dec)
-                        cResult[targetIdx++] = '.';
-                    cResult[targetIdx++] = sRange.charAt(i);
-                }
-                result = new String(cResult);
-            }
+    private void outputNull()
+    {
+        for(int i = 0; i < this.nullB.length; i++)
+            this.outputBytes[outputIdx++] = this.nullB[i];
+    }
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
+    private void ComputeLimitRangeString(byte[] bytes, KeyValueOffsets lowPrice, KeyValueOffsets highPrice) throws Exception {
+        if (lowPrice == null || highPrice == null) {
+            outputNull();
+        }else {
+            //copy the high price into a temp buffer to do the subtraction in
+            byte[] highPriceB = new byte[highPrice.valueEnd - highPrice.valueStart];
+            for (int i = 0; i + highPrice.valueStart < highPrice.valueEnd; i++)
+                highPriceB[i] = bytes[i + highPrice.valueStart];
+
+            //determine if the low price is negative or not
+            //if it is negative just add the two long values
+            int highIdx = highPriceB.length - 1;
+            if(bytes[lowPrice.valueStart] == BlockByteParser.minus)
+            {
+                //low value is negative so add both fields
+                for (int i = lowPrice.valueEnd - 1; i > lowPrice.valueStart; i--) {
+                    //handle when the negative number is larger than the high price
+                    if(highIdx < 0) {
+                        highPriceB = addByteAtBeginning(highPriceB);
+                        highIdx++;
+                    }
+
+                    if (highPriceB[highIdx] != BlockByteParser.period) {
+                        highPriceB[highIdx] = (byte)(highPriceB[highIdx] + bytes[i] - BlockByteParser.zero);
+                        if (highPriceB[highIdx] != 0x00 && highPriceB[highIdx] > BlockByteParser.nine) {
+                            if(highIdx == 0) {
+                                highPriceB = addByteAtBeginning(highPriceB);
+                                highIdx++;
+                            }
+                            addTen(highPriceB, highIdx);
+                        }
+                    }
+                    highIdx--;
+                }
+                while(highIdx >= 0)
+                {
+                    if (highPriceB[highIdx] != BlockByteParser.period && highPriceB[highIdx] != 0x00 && highPriceB[highIdx] > BlockByteParser.nine) {
+                        if(highIdx == 0) {
+                            highPriceB = addByteAtBeginning(highPriceB);
+                            highIdx++;
+                        }
+                        addTen(highPriceB, highIdx);
+                    }
+                    highIdx--;
+                }
+
+            }else {
+                //low value is positive so subtract both fields
+                for (int i = lowPrice.valueEnd - 1; i >= lowPrice.valueStart; i--) {
+                    if (highPriceB[highIdx] != BlockByteParser.period) {
+                        if (highPriceB[highIdx] != 0x00 && highPriceB[highIdx] < BlockByteParser.zero) {
+                            borrowTen(highPriceB, highIdx);
+                        }
+                        highPriceB[highIdx] = (byte) ((highPriceB[highIdx] - bytes[i]) + BlockByteParser.zero);
+                        if (highPriceB[highIdx] != 0x00 && highPriceB[highIdx] < BlockByteParser.zero) {
+                            borrowTen(highPriceB, highIdx);
+                        }
+                    }
+                    highIdx--;
+                }
+            }
+            for (int i = 0; i < highPriceB.length; i++) {
+                this.outputBytes[outputIdx++] = highPriceB[i];
+            }
         }
-        return result;
+    }
+
+    private byte[] addByteAtBeginning(byte[] bytes)
+    {
+        byte[] temp = new byte[bytes.length+1];
+        temp[0] = BlockByteParser.zero;
+        for(int k = 1; k < bytes.length+1; k++)
+            temp[k] = bytes[k-1];
+        return temp;
+    }
+
+    private void addTen(byte[] bytes, int idx)
+    {
+        if(bytes[idx-1] != BlockByteParser.period)
+            bytes[idx - 1] = (byte) (bytes[idx - 1] + 1);
+        else
+            bytes[idx - 2] = (byte) (bytes[idx - 2] + 1);
+        bytes[idx] = (byte) (bytes[idx] - 10);
+    }
+
+    private void borrowTen(byte[] bytes, int idx)
+    {
+        if(bytes[idx-1] != BlockByteParser.period)
+            bytes[idx - 1] = (byte) (bytes[idx - 1] - 1);
+        else
+            bytes[idx - 2] = (byte) (bytes[idx - 2] - 1);
+        bytes[idx] = (byte) (bytes[idx] + 10);
     }
 
     private int getFields(byte[] bytes, int byteOffset, int byteMax, ArrayList<KeyValueOffsets> fields)
     {
         KeyValueOffsets offset = new KeyValueOffsets();
-        offset.keyStart = 0+byteOffset;
-        for(int i = 0+byteOffset; i < byteMax; i++)
+        offset.keyStart = byteOffset;
+        for(int i = byteOffset; i < byteMax; i++)
         {
             if(bytes[i] == equals)
             {

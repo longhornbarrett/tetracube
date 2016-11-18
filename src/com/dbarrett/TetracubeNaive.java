@@ -21,11 +21,11 @@ public class TetracubeNaive {
         decimal6Digit.applyPattern("000000");
     }
 
-    public void run() {
+    public void run(String input, String output) {
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/dbarrett/dev/tetracube/input/secdef.dat")));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(input)));
             String line = null;
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/Users/dbarrett/dev/tetracube/output/secdef_parsed.txt")));
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output)));
             StringBuilder sb = new StringBuilder();
             int cnt = 0;
             while ((line = reader.readLine()) != null) {
@@ -35,6 +35,7 @@ public class TetracubeNaive {
                     sb.setLength(0);
                 }
             }
+            writer.write(sb.toString());
             reader.close();
             writer.close();
         } catch (Exception e) {
@@ -118,10 +119,17 @@ public class TetracubeNaive {
     }
 
     public static void main(String[] args) {
+        String input = "./secdef.dat";
+        String output = "./secdef_parsed.txt";
+        if(args.length > 1)
+        {
+            input = args[0];
+            output = args[1];
+        }
         Long start = System.currentTimeMillis();
         TetracubeNaive cube = new TetracubeNaive();
-        cube.run();
+        cube.run(input, output);
         Long end = System.currentTimeMillis();
-        System.out.println("Total Time " +(end - start)/1000 + " milli "+(end-start));
+        System.out.println("Total Time " + (end - start) / 1000 + " milli " + (end - start));
     }
 }

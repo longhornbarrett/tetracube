@@ -42,7 +42,7 @@ public class TetracubeBytesArray {
                                 tempBuffer = new byte[bufferSize];
                                 for (int j = i + 1; j < nRead; j++)
                                     tempBuffer[k++] = buffer[j];
-                                futures.add(executor.submit(new BlockByteParser(buffer, i)));
+                                futures.add(executor.submit(new BlockByteParser(buffer, i+1)));
                                 buffer = tempBuffer;
                                 readOffset = k;
                                 i = -1;
@@ -83,16 +83,6 @@ public class TetracubeBytesArray {
         cube.run(input, output);
         Long end = System.currentTimeMillis();
         System.out.println("Total Time " + (end - start) / 1000 + " milli " + (end - start));
-        long test = 1478451616000691L;
-        long power =1000000000000000L;
-        byte[] bytes = new byte[16];
-        for(int i = 0; i < 16; i++)
-        {
-            bytes[i] = (byte)((test/power)+48);
-            test %= power;
-            power /= 10;
-        }
-        System.out.print(new String(bytes));
     }
 }
 

@@ -26,3 +26,9 @@ until the end so garbage collection would be mimimal.
 The code consistently ran in approx 1.2 seconds on my laptop or 5 to 6 times faster than the Naive solution in java.
 
 In c++ given time to refresh myself I could have gotten this to run even faster.
+
+To run this code a simple way
+java -jar tetracube.jar /dirToInput/input/secdef.dat /dirToOutput/output/secdef_parsed.txt
+
+A more efficient way would be the below
+java -Xmx8g -XX:+UseConcMarkSweepGC -Xnoclassgc -jar tetracube.jar /dirToInput/input/secdef.dat /dirToOutput/output/secdef_parsed.txt

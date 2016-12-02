@@ -17,8 +17,10 @@ public class TetracubeBytesArray {
     public void run(String input, String output) {
         try {
             final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()-1);
+            File inputFile = new File(input);
             BufferedInputStream in = new BufferedInputStream(new FileInputStream(input));
             BufferedOutputStream  out = new BufferedOutputStream(new FileOutputStream(output));
+            bufferSize = (int)inputFile.length()/(Runtime.getRuntime().availableProcessors()-1);
             byte[] buffer = new byte[bufferSize];
             byte[] tempBuffer;
             int nRead;

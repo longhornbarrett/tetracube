@@ -143,21 +143,21 @@ public class BlockParser  implements Callable<String> {
                 if (tagLength == 2) {
                     if (f == four && line.charAt(field.keyStart+1) == eight)
 
-                        tag48 = line.substring(field.keyEnd+1, field.valueEnd);
+                        tag48 = line.substring(field.keyEnd+1, field.getValueEnd());
                     else if (f == five && line.charAt(field.keyStart+1) == five)
-                        tag55 = line.substring(field.keyEnd+1, field.valueEnd);
+                        tag55 = line.substring(field.keyEnd+1, field.getValueEnd());
                 } else if (tagLength == 3 && f == seven && line.charAt(field.keyStart+1) == seven && line.charAt(field.keyStart+2) == nine)
-                    tag779 = line.substring(field.keyEnd+1, field.valueEnd);
+                    tag779 = line.substring(field.keyEnd+1, field.getValueEnd());
             } else if (tagLength == 4) {
                 if (f == one && line.charAt(field.keyStart+1) == one) {
                     if (line.charAt(field.keyStart+2) == four) {
                         if (line.charAt(field.keyStart+3) == eight)
-                            tag1148 = line.substring(field.keyEnd+1, field.valueEnd);
+                            tag1148 = line.substring(field.keyEnd+1, field.getValueEnd());
                         else if (line.charAt(field.keyStart+3) == nine)
-                            tag1149 = line.substring(field.keyEnd+1, field.valueEnd);
+                            tag1149 = line.substring(field.keyEnd+1, field.getValueEnd());
                     }
                     else if (line.charAt(field.keyStart+2) == five && line.charAt(field.keyStart+3) == zero)
-                        tag1150 = line.substring(field.keyEnd+1, field.valueEnd);
+                        tag1150 = line.substring(field.keyEnd+1, field.getValueEnd());
                 }
             }
         }
@@ -181,14 +181,14 @@ public class BlockParser  implements Callable<String> {
                 offset.keyEnd = i;
             }else if(line.charAt(i) == lineSplit)
             {
-                offset.valueEnd = i;
+                offset.setValueEnd(i);
                 fields.add(offset);
                 offset = new KeyValueOffsets();
                 offset.keyStart = i+1;
             }
         }
         if(offset.keyStart < line.length() && offset.keyEnd < line.length()) {
-            offset.valueEnd = line.length();
+            offset.setValueEnd(line.length());
             fields.add(offset);
         }
         return fields;

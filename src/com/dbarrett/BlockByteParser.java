@@ -132,19 +132,19 @@ public class BlockByteParser implements Callable<ByteOutput> {
         {
             outputNull();
         }else {
-            for (int i = offset.valueStart; i < offset.valueEnd; i++)
+            for (int i = offset.getValueStart(); i < offset.getValueEnd(); i++)
                 this.outputBytes[outputIdx++] = this.bytes[i];
         }
     }
 
     private void ToDateEpochString(byte[] dateB, KeyValueOffsets dateO) {
         try {
-            int year = parseInt(dateB, dateO.valueStart, dateO.valueStart + 4);
-            int month = parseInt(dateB, dateO.valueStart + 4, dateO.valueStart + 6);
-            int date = parseInt(dateB, dateO.valueStart + 6, dateO.valueStart + 8);
-            int hour = parseInt(dateB, dateO.valueStart + 8, dateO.valueStart + 10);
-            int minute = parseInt(dateB, dateO.valueStart + 10, dateO.valueStart + 12);
-            int second = parseInt(dateB, dateO.valueStart + 12, dateO.valueStart + 14);
+            int year = parseInt(dateB, dateO.getValueStart(), dateO.getValueStart() + 4);
+            int month = parseInt(dateB, dateO.getValueStart() + 4, dateO.getValueStart() + 6);
+            int date = parseInt(dateB, dateO.getValueStart() + 6, dateO.getValueStart() + 8);
+            int hour = parseInt(dateB, dateO.getValueStart() + 8, dateO.getValueStart() + 10);
+            int minute = parseInt(dateB, dateO.getValueStart() + 10, dateO.getValueStart() + 12);
+            int second = parseInt(dateB, dateO.getValueStart() + 12, dateO.getValueStart() + 14);
             cal.set(year, month, date, hour, minute, second);
         }catch (Exception e)
         {
@@ -173,17 +173,17 @@ public class BlockByteParser implements Callable<ByteOutput> {
             outputNull();
         }else {
             //copy the high price into a temp buffer to do the subtraction in
-            byte[] highPriceB = new byte[highPrice.valueEnd - highPrice.valueStart];
-            for (int i = 0; i + highPrice.valueStart < highPrice.valueEnd; i++)
-                highPriceB[i] = bytes[i + highPrice.valueStart];
+            byte[] highPriceB = new byte[highPrice.getValueEnd() - highPrice.getValueStart()];
+            for (int i = 0; i + highPrice.getValueStart() < highPrice.getValueEnd(); i++)
+                highPriceB[i] = bytes[i + highPrice.getValueStart()];
 
             //determine if the low price is negative or not
             //if it is negative just add the two long values
             int highIdx = highPriceB.length - 1;
-            if(bytes[lowPrice.valueStart] == BlockByteParser.minus)
+            if(bytes[lowPrice.getValueStart()] == BlockByteParser.minus)
             {
                 //low value is negative so add both fields
-                for (int i = lowPrice.valueEnd - 1; i > lowPrice.valueStart; i--) {
+                for (int i = lowPrice.getValueEnd() - 1; i > lowPrice.getValueStart(); i--) {
                     //handle when the negative number is larger than the high price
                     if(highIdx < 0) {
                         highPriceB = addByteAtBeginning(highPriceB);
@@ -216,7 +216,7 @@ public class BlockByteParser implements Callable<ByteOutput> {
 
             }else {
                 //low value is positive so subtract both fields
-                for (int i = lowPrice.valueEnd - 1; i >= lowPrice.valueStart; i--) {
+                for (int i = lowPrice.getValueEnd() - 1; i >= lowPrice.getValueStart(); i--) {
                     if (highPriceB[highIdx] != BlockByteParser.period) {
                         if (highPriceB[highIdx] != 0x00 && highPriceB[highIdx] < BlockByteParser.zero) {
                             borrowTen(highPriceB, highIdx);
@@ -271,10 +271,10 @@ public class BlockByteParser implements Callable<ByteOutput> {
             if(bytes[i] == equals)
             {
                 offset.keyEnd = i;
-                offset.valueStart = i+1;
+                offset.setValueStart(i+1);
             }else if(bytes[i] == delim)
             {
-                offset.valueEnd = i;
+                offset.setValueEnd(i);
                 fields.add(offset);
                 offset = new KeyValueOffsets();
                 offset.keyStart = i+1;

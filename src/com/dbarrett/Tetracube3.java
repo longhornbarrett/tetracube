@@ -25,16 +25,13 @@ public class Tetracube3 {
             final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()-1);
             final List<Future<ByteOutput>> futures = new ArrayList<Future<ByteOutput>>();
             FileChannel inputFile = new RandomAccessFile(input, "r").getChannel();
-//            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(output));
             FileChannel outputFile = new RandomAccessFile(output, "rw").getChannel();
             long fileSize = inputFile.size();
             MappedByteBuffer in = inputFile.map(FileChannel.MapMode.READ_ONLY, 0, fileSize);
             int currentOffset = 0;
-//            int cnt= 0;
             blockSize = (int)inputFile.size()/(Runtime.getRuntime().availableProcessors()-1);
             while(currentOffset < fileSize)
             {
-//                System.out.println("Thread "+cnt++);
                 long endOfBlock = currentOffset+blockSize;
                 if(endOfBlock >= fileSize)
                     endOfBlock = fileSize;
@@ -54,7 +51,6 @@ public class Tetracube3 {
                     System.out.println("Error during processing");
                 }
             }
-            //out.slice()
             executor.shutdown();
             inputFile.close();
             outputFile.close();
@@ -70,6 +66,11 @@ public class Tetracube3 {
 //            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(output));
             //FileChannel outputFile = new RandomAccessFile(output, "rw").getChannel();
             MappedByteBuffer in = inputFile.map(FileChannel.MapMode.READ_WRITE, 0, inputFile.size());
+            System.out.println(in.position());
+            long initial = in.getLong();
+            System.out.println(in.position());
+            byte by = in.get();
+            System.out.println(in.position());
             int cnt = 0;
             byte one = 0x31;
             long fileSize = inputFile.size();
@@ -103,7 +104,9 @@ public class Tetracube3 {
             input = args[0];
             output = args[1];
         }
-
+        //long flag = 0x000000FF;
+        //long test = 3616444609601810486L;
+        //System.out.println(test&flag);
         Tetracube3 cube = new Tetracube3();
         long start = System.currentTimeMillis();
         cube.run(input, output);

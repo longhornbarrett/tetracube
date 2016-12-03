@@ -29,7 +29,6 @@ public class MappedBlockByteParser implements Callable<ByteOutput> {
     private static byte[] nullB = {0x4E, 0x55, 0x4C, 0x4C};
     private Calendar cal = new GregorianCalendar();
     private ByteBuffer bytes, out;
-    private int outputIdx = 0;
     private int nRead, offset;
     private static HashMap<Long, Long> calendarShort = new HashMap<Long, Long>();
     KeyValueOffsets tag48 = new KeyValueOffsets();
@@ -43,7 +42,7 @@ public class MappedBlockByteParser implements Callable<ByteOutput> {
         this.bytes = buffer;
         this.nRead = nRead;
         this.offset = offset;
-        this.out = ByteBuffer.allocate(Tetracube3.blockSize);
+        this.out = ByteBuffer.allocate(nRead - offset);
     }
 
     @Override
@@ -61,6 +60,11 @@ public class MappedBlockByteParser implements Callable<ByteOutput> {
                     byteOffset = nRead;
                     continue;
                 }
+                if(this.bytes.get(byteOffset) == newLine)
+                {
+                    byteOffset++;
+                    break;
+                }
                 int plus1 = byteOffset + 1;
                 int plus2 = byteOffset + 2;
                 int plus3 = byteOffset + 3;
@@ -68,58 +72,66 @@ public class MappedBlockByteParser implements Callable<ByteOutput> {
                 //go through the buffer and find the field's in the line
                 byte f = this.bytes.get(byteOffset);
                 if (f == four && this.bytes.get(plus1) == eight && this.bytes.get(plus2) == equals) {
-                    tag48.valueStart = plus3;
+                    tag48.setValueStart(plus3);
                     byteOffset = plus3;
+                    //move to the end of the field
                     while (this.bytes.get(byteOffset) != delim)
                         byteOffset++;
-                    tag48.valueEnd = byteOffset;
+                    tag48.setValueEnd(byteOffset);
                 } else if (f == five && this.bytes.get(plus1) == five && this.bytes.get(plus2) == equals) {
-                    tag55.valueStart = plus3;
+                    tag55.setValueStart(plus3);
                     byteOffset = plus3;
+                    //move to the end of the field
                     while (this.bytes.get(byteOffset) != delim)
                         byteOffset++;
-                    tag55.valueEnd = byteOffset;
-                } else if (f == seven && this.bytes.get(plus1) == seven && this.bytes.get(plus2) == equals) {
-                    tag779.valueStart = plus3;
-                    byteOffset = plus3;
+                    tag55.setValueEnd(byteOffset);
+                } else if (f == seven && this.bytes.get(plus1) == seven && this.bytes.get(plus2) == nine && this.bytes.get(plus3) == equals) {
+                    tag779.setValueStart(plus4);
+                    byteOffset = plus4;
+                    //move to the end of the field
                     while (this.bytes.get(byteOffset) != delim)
                         byteOffset++;
-                    tag779.valueEnd = byteOffset;
+                    tag779.setValueEnd(byteOffset);
                 } else if (f == one && this.bytes.get(plus1) == one) {
                     int plus5 = plus4+1;
                     if (this.bytes.get(plus2) == four && this.bytes.get(plus3) == eight && this.bytes.get(plus4) == equals) {
-                        tag1148.valueStart = plus5;
+                        tag1148.setValueStart(plus5);
                         byteOffset = plus5;
+                        //move to the end of the field
                         while (this.bytes.get(byteOffset) != delim)
                             byteOffset++;
-                        tag1148.valueEnd = byteOffset;
+                        tag1148.setValueEnd(byteOffset);
                     } else if (this.bytes.get(plus2) == four && this.bytes.get(plus3) == nine && this.bytes.get(plus4) == equals) {
-                        tag1149.valueStart = plus5;
+                        tag1149.setValueStart(plus5);
                         byteOffset = plus5;
+                        //move to the end of the field
                         while (this.bytes.get(byteOffset) != delim)
                             byteOffset++;
-                        tag1149.valueEnd = byteOffset;
+                        tag1149.setValueEnd(byteOffset);
                     } else if (this.bytes.get(plus2) == five && this.bytes.get(plus3) == zero && this.bytes.get(plus4) == equals) {
-                        tag1150.valueStart = plus5;
+                        tag1150.setValueStart(plus5);
                         byteOffset = plus5;
+                        //move to the end of the field
                         while (this.bytes.get(byteOffset) != delim)
                             byteOffset++;
-                        tag1150.valueEnd = byteOffset;
+                        tag1150.setValueEnd(byteOffset);
                     } else {
+                        //go to next field
                         do {
                             ++byteOffset;
                         } while (this.bytes.get(byteOffset) != delim);
                     }
                 } else {
+                    //go to next field
                     do {
                         ++byteOffset;
                     } while (this.bytes.get(byteOffset) != delim);
                 }
             }
             //construct the message tag
-            copyToFinal(tag48);
+            copyToFinal(tag48.isFound(), tag48.getValueStart(), tag48.getValueEnd());
             out.put(MappedBlockByteParser.semi);
-            copyToFinal(tag55);
+            copyToFinal(tag55.isFound(), tag55.getValueStart(), tag55.getValueEnd());
             out.put(MappedBlockByteParser.newLine);
             //construct the date message
 
@@ -129,12 +141,12 @@ public class MappedBlockByteParser implements Callable<ByteOutput> {
 
             //construct low limit message
             out.put(MappedBlockByteParser.lowLimitB);
-            copyToFinal(tag1148);
+            copyToFinal(tag1148.isFound(), tag1148.getValueStartDontReset(), tag1148.getValueEnd());
             out.put(MappedBlockByteParser.newLine);
 
             //construct high limit message
             out.put(MappedBlockByteParser.highLimitB);
-            copyToFinal(tag1149);
+            copyToFinal(tag1149.isFound(), tag1149.getValueStartDontReset(), tag1149.getValueEnd());
             out.put(MappedBlockByteParser.newLine);
 
             out.put(MappedBlockByteParser.limitPriceB);
@@ -142,40 +154,38 @@ public class MappedBlockByteParser implements Callable<ByteOutput> {
             out.put(MappedBlockByteParser.newLine);
 
             out.put(MappedBlockByteParser.tradingB);
-            copyToFinal(tag1150);
+            copyToFinal(tag1150.isFound(), tag1150.getValueStart(), tag1150.getValueEnd());
             out.put(MappedBlockByteParser.newLine);
         }
     }
 
-    private void copyToFinal(KeyValueOffsets offset) {
-        if (offset == null) {
-            out.put(MappedBlockByteParser.nullB);
+    private void copyToFinal(boolean found, int valueStart, int valueEnd) {
+        if (found) {
+            for (; valueStart < valueEnd; valueStart++)
+                out.put(this.bytes.get(valueStart));
         } else {
-            for (int i = offset.valueStart; i < offset.valueEnd; i++)
-                out.put(this.bytes.get(i));
+            out.put(MappedBlockByteParser.nullB);
         }
     }
 
     private void ToDateEpochString(KeyValueOffsets dateO) {
         long dateFromEpoch = 0;
         try {
-            Long hash = 1L;
-            int end = dateO.valueStart + 9;
-            for (int i = dateO.valueStart; i < end; i++)
-                hash = 31 * hash + this.bytes.get(i);
+            Long hash = this.bytes.getLong(dateO.getValueStart());
+            int valueStart = dateO.getValueStart();
             Long millis = MappedBlockByteParser.calendarShort.get(hash);
             if (millis == null) {
-                int year = parseInt(dateO.valueStart, dateO.valueStart + 4);
-                int month = parseInt(dateO.valueStart + 4, dateO.valueStart + 6);
-                int day = parseInt(dateO.valueStart + 6, dateO.valueStart + 8);
+                int year = parseInt(valueStart, valueStart + 4);
+                int month = parseInt(valueStart + 4, valueStart + 6);
+                int day = parseInt(valueStart + 6, valueStart + 8);
                 cal.set(year, month, day, 0, 0, 0);
                 millis = cal.getTimeInMillis();
                 MappedBlockByteParser.calendarShort.put(hash, millis);
             }
 
-            int hour = parseInt(dateO.valueStart + 8, dateO.valueStart + 10) * 3600000;
-            int minute = parseInt(dateO.valueStart + 10, dateO.valueStart + 12) * 60000;
-            int second = parseInt(dateO.valueStart + 12, dateO.valueStart + 14) * 1000;
+            int hour = parseInt(valueStart + 8, valueStart + 10) * 3600000;
+            int minute = parseInt(valueStart + 10, valueStart + 12) * 60000;
+            int second = parseInt(valueStart + 12, valueStart + 14) * 1000;
             dateFromEpoch = (millis.longValue() + hour + minute + second) * 1000;
         } catch (Exception e) {
             e.printStackTrace();
@@ -190,65 +200,74 @@ public class MappedBlockByteParser implements Callable<ByteOutput> {
     }
 
     private void ComputeLimitRangeString(KeyValueOffsets lowPrice, KeyValueOffsets highPrice) throws Exception {
-        if (lowPrice == null || highPrice == null) {
-            out.put(MappedBlockByteParser.nullB);
-        } else {
-            //copy the high price into a temp buffer to do the subtraction in
-            byte[] highPriceB = new byte[highPrice.valueEnd - highPrice.valueStart];
-            for (int i = 0; i + highPrice.valueStart < highPrice.valueEnd; i++)
-                highPriceB[i] = this.bytes.get(i + highPrice.valueStart);
+        try {
+            if (!lowPrice.isFound() || !highPrice.isFound()) {
+                out.put(MappedBlockByteParser.nullB);
+            } else {
+                //copy the high price into a temp buffer to do the subtraction in
+                int highValueStart = highPrice.getValueStart();
+                int highValueEnd = highPrice.getValueEnd();
+                int lowValueStart = lowPrice.getValueStart();
+                int lowValueEnd = lowPrice.getValueEnd();
+                byte[] highPriceB = new byte[highValueEnd - highValueStart];
+                for (int i = 0; i + highValueStart < highValueEnd; i++)
+                    highPriceB[i] = this.bytes.get(i + highValueStart);
 
-            //determine if the low price is negative or not
-            //if it is negative just add the two long values
-            int highIdx = highPriceB.length - 1;
-            if (this.bytes.get(lowPrice.valueStart) == MappedBlockByteParser.minus) {
-                //low value is negative so add both fields
-                for (int i = lowPrice.valueEnd - 1; i > lowPrice.valueStart; i--) {
-                    //handle when the negative number is larger than the high price
-                    if (highIdx < 0) {
-                        highPriceB = addByteAtBeginning(highPriceB);
-                        highIdx++;
+                //determine if the low price is negative or not
+                //if it is negative just add the two long values
+                int highIdx = highPriceB.length - 1;
+                if (this.bytes.get(lowValueStart) == MappedBlockByteParser.minus) {
+                    //low value is negative so add both fields
+                    for (int i = lowValueEnd - 1; i > lowValueStart; i--) {
+                        //handle when the negative number is larger than the high price
+                        if (highIdx < 0) {
+                            highPriceB = addByteAtBeginning(highPriceB);
+                            highIdx++;
+                        }
+
+                        if (highPriceB[highIdx] != MappedBlockByteParser.period) {
+                            highPriceB[highIdx] = (byte) (highPriceB[highIdx] + this.bytes.get(i) - MappedBlockByteParser.zero);
+                            if (highPriceB[highIdx] != 0x00 && highPriceB[highIdx] > MappedBlockByteParser.nine) {
+                                if (highIdx == 0) {
+                                    highPriceB = addByteAtBeginning(highPriceB);
+                                    highIdx++;
+                                }
+                                addTen(highPriceB, highIdx);
+                            }
+                        }
+                        highIdx--;
                     }
-
-                    if (highPriceB[highIdx] != MappedBlockByteParser.period) {
-                        highPriceB[highIdx] = (byte) (highPriceB[highIdx] + this.bytes.get(i) - MappedBlockByteParser.zero);
-                        if (highPriceB[highIdx] != 0x00 && highPriceB[highIdx] > MappedBlockByteParser.nine) {
+                    while (highIdx >= 0) {
+                        if (highPriceB[highIdx] != MappedBlockByteParser.period && highPriceB[highIdx] != 0x00 && highPriceB[highIdx] > MappedBlockByteParser.nine) {
                             if (highIdx == 0) {
                                 highPriceB = addByteAtBeginning(highPriceB);
                                 highIdx++;
                             }
                             addTen(highPriceB, highIdx);
                         }
+                        highIdx--;
                     }
-                    highIdx--;
-                }
-                while (highIdx >= 0) {
-                    if (highPriceB[highIdx] != MappedBlockByteParser.period && highPriceB[highIdx] != 0x00 && highPriceB[highIdx] > MappedBlockByteParser.nine) {
-                        if (highIdx == 0) {
-                            highPriceB = addByteAtBeginning(highPriceB);
-                            highIdx++;
-                        }
-                        addTen(highPriceB, highIdx);
-                    }
-                    highIdx--;
-                }
 
-            } else {
-                //low value is positive so subtract both fields
-                for (int i = lowPrice.valueEnd - 1; i >= lowPrice.valueStart; i--) {
-                    if (highPriceB[highIdx] != MappedBlockByteParser.period) {
-                        if (highPriceB[highIdx] != 0x00 && highPriceB[highIdx] < MappedBlockByteParser.zero) {
-                            borrowTen(highPriceB, highIdx);
+                } else {
+                    //low value is positive so subtract both fields
+                    for (int i = lowValueEnd - 1; i >= lowValueStart; i--) {
+                        if (highPriceB[highIdx] != MappedBlockByteParser.period) {
+                            if (highPriceB[highIdx] != 0x00 && highPriceB[highIdx] < MappedBlockByteParser.zero) {
+                                borrowTen(highPriceB, highIdx);
+                            }
+                            highPriceB[highIdx] = (byte) ((highPriceB[highIdx] - this.bytes.get(i)) + MappedBlockByteParser.zero);
+                            if (highPriceB[highIdx] != 0x00 && highPriceB[highIdx] < MappedBlockByteParser.zero) {
+                                borrowTen(highPriceB, highIdx);
+                            }
                         }
-                        highPriceB[highIdx] = (byte) ((highPriceB[highIdx] - this.bytes.get(i)) + MappedBlockByteParser.zero);
-                        if (highPriceB[highIdx] != 0x00 && highPriceB[highIdx] < MappedBlockByteParser.zero) {
-                            borrowTen(highPriceB, highIdx);
-                        }
+                        highIdx--;
                     }
-                    highIdx--;
                 }
+                out.put(highPriceB);
             }
-            out.put(highPriceB);
+        }catch (Exception e)
+        {
+            e.printStackTrace();
         }
     }
 
@@ -286,18 +305,4 @@ public class MappedBlockByteParser implements Callable<ByteOutput> {
         }
         return ret;
     }
-
-    private long parseLong(int start, int end, boolean skipPeriod) {
-        long ret = 0L;
-        long power = 1;
-        for (int i = end - 1; i >= start; i--) {
-            if (skipPeriod && this.bytes.get(i) == period)
-                continue;
-            ret += ((this.bytes.get(i) - zero) * power);
-            power *= 10;
-        }
-        return ret;
-    }
-
-
 }

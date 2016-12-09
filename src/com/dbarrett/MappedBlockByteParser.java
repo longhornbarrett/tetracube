@@ -192,6 +192,7 @@ public class MappedBlockByteParser implements Callable<ByteOutput> {
         }
         //could pull the microseconds from the field
         long power = 1000000000000000L;
+
         for (int i = 0; i < 16; i++) {
             out.put((byte) ((dateFromEpoch / power) + 48));
             dateFromEpoch %= power;

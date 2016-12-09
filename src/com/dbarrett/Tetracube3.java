@@ -106,11 +106,17 @@ public class Tetracube3 {
         }
         //long flag = 0x000000FF;
         //long test = 3616444609601810486L;
+        long test = 10486L;
+        Long test2 = 1100L;
+        test2.toString();
+        for (int i = 3; i >= 0; i--) {
+            System.out.println((char) ((test >> (8 * i)) & 0xFF));
+        }
         //System.out.println(test&flag);
-        Tetracube3 cube = new Tetracube3();
-        long start = System.currentTimeMillis();
-        cube.run(input, output);
-        long end = System.currentTimeMillis();
-        System.out.println("Total Time run " + (end - start) / 1000 + " milli " + (end - start));
+        //Tetracube3 cube = new Tetracube3();
+        //long start = System.currentTimeMillis();
+        //cube.run(input, output);
+        //long end = System.currentTimeMillis();
+        //System.out.println("Total Time run " + (end - start) / 1000 + " milli " + (end - start));
     }
 }

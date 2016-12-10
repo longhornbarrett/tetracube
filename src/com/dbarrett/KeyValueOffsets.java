@@ -28,10 +28,6 @@ public class KeyValueOffsets {
         return valueStart;
     }
 
-    public int getValueStartDontReset() {
-        return valueStart;
-    }
-
     public void setValueStart(int valueStart) {
         found = true;
         this.valueStart = valueStart;
